@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
+import { validateSignupForm, sanitizeInput } from '@/lib/validation';
 
 interface SignupFormProps {
   onSignup: (username: string, email: string, password: string) => Promise<boolean>;
@@ -27,17 +28,22 @@ const SignupForm: React.FC<SignupFormProps> = ({
     e.preventDefault();
     setLocalError(null);
 
-    if (password !== confirmPassword) {
-      setLocalError('Passwords do not match');
+    const sanitizedUsername = sanitizeInput(username);
+    const sanitizedEmail = sanitizeInput(email);
+
+    const validation = validateSignupForm(
+      sanitizedUsername,
+      sanitizedEmail,
+      password,
+      confirmPassword
+    );
+
+    if (!validation.isValid) {
+      setLocalError(validation.error || 'Validation failed');
       return;
     }
 
-    if (password.length < 6) {
-      setLocalError('Password must be at least 6 characters');
-      return;
-    }
-
-    await onSignup(username, email, password);
+    await onSignup(sanitizedUsername, sanitizedEmail, password);
   };
 
   const displayError = localError || error;
