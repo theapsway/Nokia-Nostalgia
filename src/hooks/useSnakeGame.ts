@@ -1,54 +1,20 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Direction, GameMode, GameState, Position, SnakeSegment } from '@/types/game';
-
-const GRID_SIZE = 20;
-const INITIAL_SPEED = 150;
-const SPEED_INCREMENT = 5;
-const MIN_SPEED = 50;
-
-const getOppositeDirection = (dir: Direction): Direction => {
-  const opposites: Record<Direction, Direction> = {
-    UP: 'DOWN',
-    DOWN: 'UP',
-    LEFT: 'RIGHT',
-    RIGHT: 'LEFT',
-  };
-  return opposites[dir];
-};
-
-const getInitialSnake = (): SnakeSegment[] => [
-  { x: 10, y: 10, dotSide: 'left' },
-  { x: 9, y: 10, dotSide: 'right' },
-  { x: 8, y: 10, dotSide: 'left' },
-];
-
-const generateFood = (snake: SnakeSegment[]): Position => {
-  let food: Position;
-  do {
-    food = {
-      x: Math.floor(Math.random() * GRID_SIZE),
-      y: Math.floor(Math.random() * GRID_SIZE),
-    };
-  } while (snake.some(seg => seg.x === food.x && seg.y === food.y));
-  return food;
-};
-
-const getInitialState = (gameMode: GameMode): GameState => {
-  const snake = getInitialSnake();
-  return {
-    snake,
-    food: generateFood(snake),
-    direction: 'RIGHT',
-    score: 0,
-    isPlaying: false,
-    isGameOver: false,
-    gameMode,
-    gridSize: GRID_SIZE,
-  };
-};
+import { Direction, GameMode, GameState } from '@/types/game';
+import {
+  getOppositeDirection,
+  getInitialGameState,
+  calculateNewPosition,
+  checkSelfCollision,
+  checkFoodCollision,
+  generateFoodPosition,
+  createNewHead,
+  calculateSpeed,
+  INITIAL_SPEED,
+  SCORE_PER_FOOD,
+} from '@/lib/gameLogic';
 
 export const useSnakeGame = (initialMode: GameMode = 'walls') => {
-  const [gameState, setGameState] = useState<GameState>(() => getInitialState(initialMode));
+  const [gameState, setGameState] = useState<GameState>(() => getInitialGameState(initialMode));
   const [speed, setSpeed] = useState(INITIAL_SPEED);
   const directionRef = useRef<Direction>('RIGHT');
   const gameLoopRef = useRef<NodeJS.Timeout | null>(null);
@@ -58,7 +24,7 @@ export const useSnakeGame = (initialMode: GameMode = 'walls') => {
       clearInterval(gameLoopRef.current);
       gameLoopRef.current = null;
     }
-    setGameState(getInitialState(gameState.gameMode));
+    setGameState(getInitialGameState(gameState.gameMode));
     setSpeed(INITIAL_SPEED);
     directionRef.current = 'RIGHT';
   }, [gameState.gameMode]);
@@ -73,46 +39,33 @@ export const useSnakeGame = (initialMode: GameMode = 'walls') => {
 
       const head = prev.snake[0];
       const direction = directionRef.current;
-      let newX = head.x;
-      let newY = head.y;
+      
+      const { position: newPosition, hitWall } = calculateNewPosition(
+        head,
+        direction,
+        prev.gridSize,
+        prev.gameMode
+      );
 
-      switch (direction) {
-        case 'UP': newY -= 1; break;
-        case 'DOWN': newY += 1; break;
-        case 'LEFT': newX -= 1; break;
-        case 'RIGHT': newX += 1; break;
-      }
-
-      // Handle wall collision based on game mode
-      if (prev.gameMode === 'walls') {
-        if (newX < 0 || newX >= GRID_SIZE || newY < 0 || newY >= GRID_SIZE) {
-          return { ...prev, isPlaying: false, isGameOver: true };
-        }
-      } else {
-        // Pass-through mode
-        newX = (newX + GRID_SIZE) % GRID_SIZE;
-        newY = (newY + GRID_SIZE) % GRID_SIZE;
-      }
-
-      // Check self collision
-      if (prev.snake.some(seg => seg.x === newX && seg.y === newY)) {
+      // Handle wall collision
+      if (hitWall) {
         return { ...prev, isPlaying: false, isGameOver: true };
       }
 
-      const newHead: SnakeSegment = {
-        x: newX,
-        y: newY,
-        dotSide: head.dotSide === 'left' ? 'right' : 'left',
-      };
+      // Check self collision
+      if (checkSelfCollision(newPosition, prev.snake)) {
+        return { ...prev, isPlaying: false, isGameOver: true };
+      }
 
+      const newHead = createNewHead(newPosition, head);
       const newSnake = [newHead, ...prev.snake];
       let newFood = prev.food;
       let newScore = prev.score;
 
       // Check food collision
-      if (newX === prev.food.x && newY === prev.food.y) {
-        newScore += 10;
-        newFood = generateFood(newSnake);
+      if (checkFoodCollision(newPosition, prev.food)) {
+        newScore += SCORE_PER_FOOD;
+        newFood = generateFoodPosition(newSnake, prev.gridSize);
       } else {
         newSnake.pop();
       }
@@ -171,8 +124,7 @@ export const useSnakeGame = (initialMode: GameMode = 'walls') => {
 
   // Speed increase based on score
   useEffect(() => {
-    const newSpeed = Math.max(MIN_SPEED, INITIAL_SPEED - Math.floor(gameState.score / 50) * SPEED_INCREMENT);
-    setSpeed(newSpeed);
+    setSpeed(calculateSpeed(gameState.score));
   }, [gameState.score]);
 
   // Keyboard controls

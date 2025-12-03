@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
+import { validateLoginForm, sanitizeInput } from '@/lib/validation';
 
 interface LoginFormProps {
   onLogin: (email: string, password: string) => Promise<boolean>;
@@ -19,11 +20,24 @@ const LoginForm: React.FC<LoginFormProps> = ({
 }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onLogin(email, password);
+    setLocalError(null);
+
+    const sanitizedEmail = sanitizeInput(email);
+    const validation = validateLoginForm(sanitizedEmail, password);
+
+    if (!validation.isValid) {
+      setLocalError(validation.error || 'Validation failed');
+      return;
+    }
+
+    await onLogin(sanitizedEmail, password);
   };
+
+  const displayError = localError || error;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -52,8 +66,8 @@ const LoginForm: React.FC<LoginFormProps> = ({
         />
       </div>
       
-      {error && (
-        <p className="text-accent text-sm bg-accent/10 p-2 rounded">{error}</p>
+      {displayError && (
+        <p className="text-accent text-sm bg-accent/10 p-2 rounded">{displayError}</p>
       )}
 
       <Button type="submit" className="w-full" disabled={isLoading}>
