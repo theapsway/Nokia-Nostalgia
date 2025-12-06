@@ -1,0 +1,371 @@
+openapi: 3.0.0
+info:
+  title: Nokia Nostalgia Snake API
+  description: API specification for the Snake Game, based on frontend requirements.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+      required:
+        - id
+        - username
+        - email
+
+    GameMode:
+      type: string
+      enum:
+        - pass-through
+        - walls
+
+    Position:
+      type: object
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+      required:
+        - x
+        - y
+
+    SnakeSegment:
+      allOf:
+        - $ref: '#/components/schemas/Position'
+        - type: object
+          properties:
+            dotSide:
+              type: string
+              enum:
+                - left
+                - right
+          required:
+            - dotSide
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        score:
+          type: number
+        gameMode:
+          $ref: '#/components/schemas/GameMode'
+        date:
+          type: string
+          format: date-time
+      required:
+        - id
+        - username
+        - score
+        - gameMode
+        - date
+
+    ActiveGame:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        score:
+          type: number
+        gameMode:
+          $ref: '#/components/schemas/GameMode'
+        snake:
+          type: array
+          items:
+            $ref: '#/components/schemas/SnakeSegment'
+        food:
+          $ref: '#/components/schemas/Position'
+      required:
+        - id
+        - username
+        - score
+        - gameMode
+        - snake
+        - food
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        user:
+          $ref: '#/components/schemas/User'
+        error:
+          type: string
+      required:
+        - success
+
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object # Generic placeholder, specialized in paths
+        error:
+          type: string
+      required:
+        - success
+
+  securitySchemes:
+    # Assuming cookie-based or token-based auth eventually, but currently frontend uses localStorage/mock
+    # Defining a placeholder for now
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  /auth/login:
+    post:
+      summary: Login a user
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /auth/signup:
+    post:
+      summary: Register a new user
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+              required:
+                - username
+                - email
+                - password
+      responses:
+        '200':
+          description: Signup successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Validation error (e.g. existing email/username)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /auth/logout:
+    post:
+      summary: Logout the current user
+      tags:
+        - Auth
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+  /auth/me:
+    get:
+      summary: Get current logged-in user
+      tags:
+        - Auth
+      responses:
+        '200':
+          description: Current user data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/User'
+                    nullable: true
+
+  /leaderboard:
+    get:
+      summary: Get leaderboard entries
+      tags:
+        - Leaderboard
+      parameters:
+        - in: query
+          name: gameMode
+          schema:
+            $ref: '#/components/schemas/GameMode'
+          required: false
+          description: Filter by game mode
+      responses:
+        '200':
+          description: List of leaderboard entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaderboardEntry'
+
+    post:
+      summary: Submit a new score
+      tags:
+        - Leaderboard
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                score:
+                  type: number
+                gameMode:
+                  $ref: '#/components/schemas/GameMode'
+              required:
+                - score
+                - gameMode
+      responses:
+        '200':
+          description: Score submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/LeaderboardEntry'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+
+  /spectate/active:
+    get:
+      summary: Get list of active games
+      tags:
+        - Spectate
+      responses:
+        '200':
+          description: List of active games
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ActiveGame'
+
+  /spectate/{gameId}:
+    get:
+      summary: Get state of a specific game
+      tags:
+        - Spectate
+      parameters:
+        - in: path
+          name: gameId
+          schema:
+            type: string
+          required: true
+          description: ID of the game to spectate
+      responses:
+        '200':
+          description: Game state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ActiveGame'
+                    nullable: true
+        '404':
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
