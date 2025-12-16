@@ -27,7 +27,7 @@ jobs:
         working-directory: frontend
         run: npm run test -- --run
 
-  test-backend:
+  test-backend-unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -46,12 +46,35 @@ jobs:
         run: |
           uv sync --frozen
           
-      - name: Run Tests
+      - name: Run Unit Tests
         working-directory: backend
-        run: uv run pytest
+        run: uv run python -m pytest tests
+
+  test-backend-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          
+      - name: Install Dependencies
+        working-directory: backend
+        run: |
+          uv sync --frozen
+          
+      - name: Run Integration Tests
+        working-directory: backend
+        run: uv run python -m pytest tests_integration
 
   deploy:
-    needs: [test-frontend, test-backend]
+    needs: [test-frontend, test-backend-unit, test-backend-integration]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     steps:
