@@ -22,9 +22,18 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout }) => {
     <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="font-arcade text-xl text-primary neon-text">SNAKE</span>
+          <Link to="/" className="relative inline-block">
+            <span className="absolute inset-0 font-pixel text-xl tracking-widest uppercase text-red-900 translate-x-[2px] translate-y-[2px]">
+              NOKIA NOSTALGIA
+            </span>
+            <span className="absolute inset-0 font-pixel text-xl tracking-widest uppercase text-red-700 translate-x-[1px] translate-y-[1px]">
+              NOKIA NOSTALGIA
+            </span>
+            <span className="relative font-pixel text-xl tracking-widest uppercase text-red-500 drop-shadow-[0_0_14px_rgba(239,68,68,0.8)]">
+              NOKIA NOSTALGIA
+            </span>
           </Link>
+
 
           <nav className="flex items-center gap-1">
             {navLinks.map(({ path, label, icon: Icon }) => (

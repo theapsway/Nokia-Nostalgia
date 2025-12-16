@@ -3,6 +3,7 @@ import useSnakeGame from '@/hooks/useSnakeGame';
 import SnakeCanvas from '@/components/game/SnakeCanvas';
 import GameControls from '@/components/game/GameControls';
 import MobileControls from '@/components/game/MobileControls';
+import BlockyTitle from '@/components/game/BlockyTitle';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/services/api';
 import { toast } from 'sonner';
@@ -46,38 +47,43 @@ const Index: React.FC = () => {
   }, [gameState.snake, user, gameState.isPlaying, gameState.score, gameState.gameMode, gameState.food]); // Sync every time snake moves
 
   return (
-    <main className="flex-1 container mx-auto px-4 py-8">
-      <div className="text-center mb-8">
-        <h1 className="font-arcade text-3xl md:text-4xl text-primary neon-text mb-2">
-          SNAKE GAME
-        </h1>
-        <p className="text-muted-foreground">
-          Classic arcade action with a modern twist
-        </p>
-      </div>
-
-      <div className="flex flex-col lg:flex-row gap-8 items-center justify-center">
-        <div className="game-container">
-          <SnakeCanvas
-            snake={gameState.snake}
-            food={gameState.food}
-            gridSize={gameState.gridSize}
-            cellSize={20}
-            direction={gameState.direction}
-          />
-          <MobileControls onDirectionChange={changeDirection} />
+    <main className="flex-1 container mx-auto px-4 py-4 max-h-screen overflow-hidden">
+      <div className="flex flex-col lg:flex-row gap-4 items-start justify-between h-full">
+        {/* Left side: Title */}
+        <div className="flex flex-col gap-2 lg:w-80 flex-shrink-0">
+          <BlockyTitle />
+          <p className="mt-3 text-sm font-semibold tracking-wide text-amber-300/90 drop-shadow-[0_0_6px_rgba(251,191,36,0.4)]">
+            Classic arcade action with a modern twist
+          </p>
         </div>
 
-        <GameControls
-          isPlaying={gameState.isPlaying}
-          isGameOver={gameState.isGameOver}
-          score={gameState.score}
-          gameMode={gameState.gameMode}
-          onStart={startGame}
-          onPause={pauseGame}
-          onReset={resetGame}
-          onModeChange={setGameMode}
-        />
+        {/* Center: Game Board */}
+        <div className="flex flex-col items-center justify-center flex-1">
+          <div className="game-container">
+            <SnakeCanvas
+              snake={gameState.snake}
+              food={gameState.food}
+              gridSize={gameState.gridSize}
+              cellSize={20}
+              direction={gameState.direction}
+            />
+            <MobileControls onDirectionChange={changeDirection} />
+          </div>
+        </div>
+
+        {/* Right side: Game Controls */}
+        <div className="lg:w-80 flex-shrink-0">
+          <GameControls
+            isPlaying={gameState.isPlaying}
+            isGameOver={gameState.isGameOver}
+            score={gameState.score}
+            gameMode={gameState.gameMode}
+            onStart={startGame}
+            onPause={pauseGame}
+            onReset={resetGame}
+            onModeChange={setGameMode}
+          />
+        </div>
       </div>
     </main>
   );

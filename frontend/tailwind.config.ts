@@ -14,8 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        arcade: ['"Press Start 2P"', 'cursive'],
+        arcade: ['"Press Start 2P"', 'monospace'],
+        pixel: ['"Pixelify Sans"', 'monospace'],
+        sans: ['Inter', 'system-ui'],
       },
       colors: {
         border: "hsl(var(--border))",
