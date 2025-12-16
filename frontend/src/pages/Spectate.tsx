@@ -61,7 +61,7 @@ const Spectate: React.FC = () => {
 
           <div className="flex-1">
             {selectedGame ? (
-              <SpectatorView game={selectedGame} />
+              <SpectatorView key={selectedGame.id} game={selectedGame} />
             ) : (
               <div className="game-container text-center py-12">
                 <p className="text-muted-foreground">

@@ -43,7 +43,7 @@ const Index: React.FC = () => {
         gameState.food
       ).catch(console.error);
     }
-  }, [gameState.snake]); // Sync every time snake moves
+  }, [gameState.snake, user, gameState.isPlaying, gameState.score, gameState.gameMode, gameState.food]); // Sync every time snake moves
 
   return (
     <main className="flex-1 container mx-auto px-4 py-8">
