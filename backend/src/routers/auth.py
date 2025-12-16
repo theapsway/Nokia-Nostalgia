@@ -1,28 +1,30 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 from ..models import AuthResponse, LoginRequest, SignupRequest, ApiResponse, User
-from ..database import db
+from ..database import get_user_by_email, get_user_by_username, create_user
+from ..db import get_db
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @router.post("/login", response_model=AuthResponse)
-async def login(request: LoginRequest):
-    user = db.get_user_by_email(request.email)
+async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)):
+    user = await get_user_by_email(db, request.email)
     if user and request.password == "password123": # Simple mock password check
         token = f"mock-token-{user.id}-{user.username}"
         return AuthResponse(success=True, user=user, token=token)
     return AuthResponse(success=False, error="Invalid email or password") # Return 200 with error as per frontend expectation, or 401 if strict REST. Frontend expects 200 with success: false
 
 @router.post("/signup", response_model=AuthResponse)
-async def signup(request: SignupRequest):
-    if db.get_user_by_email(request.email):
+async def signup(request: SignupRequest, db: AsyncSession = Depends(get_db)):
+    if await get_user_by_email(db, request.email):
         return AuthResponse(success=False, error="Email already registered")
-    if db.get_user_by_username(request.username):
+    if await get_user_by_username(db, request.username):
         return AuthResponse(success=False, error="Username already taken")
     
     if len(request.password) < 6:
         return AuthResponse(success=False, error="Password must be at least 6 characters")
 
-    user = db.create_user(request.username, request.email)
+    user = await create_user(db, request.username, request.email)
     token = f"mock-token-{user.id}-{user.username}"
     return AuthResponse(success=True, user=user, token=token)
 
