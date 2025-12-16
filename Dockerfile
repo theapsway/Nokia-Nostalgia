@@ -1,0 +1,36 @@
+# Stage 1: Build Frontend
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /app/frontend
+
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+
+COPY frontend/ .
+RUN npm run build
+
+# Stage 2: Backend Runtime
+FROM python:3.12-slim-bookworm
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+WORKDIR /app
+
+# Copy dependency files
+COPY backend/pyproject.toml backend/uv.lock ./
+
+# Install dependencies
+RUN uv sync --frozen --no-install-project
+
+# Copy backend source code
+COPY backend/src ./src
+
+# Copy built frontend assets
+COPY --from=frontend-builder /app/frontend/dist ./static
+
+# Expose port
+EXPOSE 8000
+
+# Run the application
+CMD ["uv", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]

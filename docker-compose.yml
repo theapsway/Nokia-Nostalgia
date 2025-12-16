@@ -14,8 +14,10 @@ services:
       timeout: 5s
       retries: 5
 
-  backend:
-    build: ./backend
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
     restart: always
     environment:
       DATABASE_URL: postgresql+asyncpg://user:password@db:5432/nokia_nostalgia
@@ -24,14 +26,6 @@ services:
         condition: service_healthy
     ports:
       - "8000:8000"
-
-  frontend:
-    build: ./frontend
-    restart: always
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
 
 volumes:
   postgres_data:
