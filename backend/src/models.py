@@ -52,5 +52,14 @@ class SignupRequest(BaseModel):
     password: str
 
 class SubmitScoreRequest(BaseModel):
+    username: str
     score: int
     gameMode: GameMode
+
+class UpdateGameRequest(BaseModel):
+    username: str
+    score: int
+    gameMode: GameMode
+    snake: List[SnakeSegment]
+    food: Position
+

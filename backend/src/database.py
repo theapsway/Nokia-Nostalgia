@@ -150,4 +150,24 @@ class MockDatabase:
         else:
             game.snake.pop()
 
+    def update_active_game(self, username: str, score: int, game_mode: str, snake: List[SnakeSegment], food: Position):
+        # Find existing game for user or create new one
+        game = next((g for g in self.active_games if g.username == username), None)
+        if game:
+            game.score = score
+            game.gameMode = game_mode
+            game.snake = snake
+            game.food = food
+        else:
+            new_game = ActiveGame(
+                id=f"game-{username}-{len(self.active_games)}",
+                username=username,
+                score=score,
+                gameMode=game_mode,
+                snake=snake,
+                food=food
+            )
+            self.active_games.append(new_game)
+
+
 db = MockDatabase()

@@ -66,10 +66,10 @@ export const leaderboardApi = {
     return request<ApiResponse<LeaderboardEntry[]>>(`/leaderboard${query}`);
   },
 
-  async submitScore(score: number, gameMode: GameMode): Promise<ApiResponse<LeaderboardEntry>> {
+  async submitScore(username: string, score: number, gameMode: GameMode): Promise<ApiResponse<LeaderboardEntry>> {
     return request<ApiResponse<LeaderboardEntry>>('/leaderboard', {
       method: 'POST',
-      body: JSON.stringify({ score, gameMode }),
+      body: JSON.stringify({ username, score, gameMode }),
     });
   },
 };
@@ -82,6 +82,13 @@ export const spectateApi = {
 
   async getGameState(gameId: string): Promise<ApiResponse<ActiveGame | null>> {
     return request<ApiResponse<ActiveGame | null>>(`/spectate/${gameId}`);
+  },
+
+  async updateGameState(username: string, score: number, gameMode: GameMode, snake: any[], food: any): Promise<ApiResponse<void>> {
+    return request<ApiResponse<void>>('/spectate/update', {
+      method: 'POST',
+      body: JSON.stringify({ username, score, gameMode, snake, food }),
+    });
   },
 };
 

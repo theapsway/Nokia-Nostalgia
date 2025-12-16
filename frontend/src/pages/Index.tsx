@@ -3,6 +3,9 @@ import useSnakeGame from '@/hooks/useSnakeGame';
 import SnakeCanvas from '@/components/game/SnakeCanvas';
 import GameControls from '@/components/game/GameControls';
 import MobileControls from '@/components/game/MobileControls';
+import { useAuth } from '@/hooks/useAuth';
+import { api } from '@/services/api';
+import { toast } from 'sonner';
 
 const Index: React.FC = () => {
   const {
@@ -13,6 +16,34 @@ const Index: React.FC = () => {
     changeDirection,
     setGameMode,
   } = useSnakeGame('walls');
+
+  const { user } = useAuth();
+
+  // Submit score when game ends
+  React.useEffect(() => {
+    if (gameState.isGameOver && user) {
+      api.leaderboard.submitScore(user.username, gameState.score, gameState.gameMode)
+        .then(res => {
+          if (res.success) {
+            toast.success("Score submitted!");
+          }
+        })
+        .catch(console.error);
+    }
+  }, [gameState.isGameOver, gameState.score, gameState.gameMode, user]);
+
+  // Sync game state for spectators
+  React.useEffect(() => {
+    if (gameState.isPlaying && user) {
+      api.spectate.updateGameState(
+        user.username,
+        gameState.score,
+        gameState.gameMode,
+        gameState.snake,
+        gameState.food
+      ).catch(console.error);
+    }
+  }, [gameState.snake]); // Sync every time snake moves
 
   return (
     <main className="flex-1 container mx-auto px-4 py-8">

@@ -53,7 +53,7 @@ def test_get_leaderboard_filter():
     assert all(entry["gameMode"] == "walls" for entry in data["data"])
 
 def test_submit_score():
-    response = client.post("/api/leaderboard", json={"score": 999, "gameMode": "walls"})
+    response = client.post("/api/leaderboard", json={"username": "TestUser", "score": 999, "gameMode": "walls"})
     assert response.status_code == 200
     data = response.json()
     assert data["success"] == True

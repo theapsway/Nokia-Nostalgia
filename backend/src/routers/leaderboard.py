@@ -12,8 +12,5 @@ async def get_leaderboard(gameMode: Optional[GameMode] = None):
 
 @router.post("", response_model=ApiResponse)
 async def submit_score(request: SubmitScoreRequest):
-    # Mock user for submission since we don't have real auth
-    # In real app, get user from token
-    username = "SnakeMaster" 
-    entry = db.submit_score(username, request.score, request.gameMode)
+    entry = db.submit_score(request.username, request.score, request.gameMode)
     return ApiResponse(success=True, data=entry)
