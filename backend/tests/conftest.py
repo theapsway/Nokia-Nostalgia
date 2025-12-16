@@ -12,6 +12,12 @@ def setup_db():
     asyncio.run(reset_db())
     yield
 
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_db_connection():
+    yield
+    from src.db import close_db_connection
+    asyncio.run(close_db_connection())
+
 @pytest.fixture
 def seed_db_sync():
     """Synchronous wrapper for seeding data."""
