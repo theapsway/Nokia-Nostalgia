@@ -6,10 +6,8 @@ client = TestClient(app)
 def test_root():
     response = client.get("/")
     assert response.status_code == 200
-    # Root now serves index.html, so content-type should be text/html
-    assert "text/html" in response.headers["content-type"]
-    # We can't easily check exact JSON anymore.
-    # assert response.json() == {"message": "Welcome to Nokia Nostalgia Snake API"}
+    # Root serves index.html if present (text/html) or a JSON message if missing (application/json)
+    assert response.headers["content-type"] in ["text/html; charset=utf-8", "text/html", "application/json"]
 
 # Auth Tests
 def test_login_success(seed_db_sync):
