@@ -7,10 +7,13 @@ async def inspect():
     async with AsyncSessionLocal() as session:
         # List Tables
         print("\n--- Tables ---")
-        result = await session.execute(text("SELECT name FROM sqlite_master WHERE type='table';"))
-        tables = result.fetchall()
-        for table in tables:
-            print(f"- {table[0]}")
+        try:
+            result = await session.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';"))
+            tables = result.fetchall()
+            for table in tables:
+                print(f"- {table[0]}")
+        except Exception as e:
+            print(f"Could not list tables: {e}")
 
         # Count and List Users
         print("\n--- Users ---")
