@@ -25,6 +25,8 @@ RUN uv sync --frozen --no-install-project
 
 # Copy backend source code
 COPY backend/src ./src
+COPY backend/tests ./tests
+COPY backend/tests_integration ./tests_integration
 
 # Copy built frontend assets
 COPY --from=frontend-builder /app/frontend/dist ./static
