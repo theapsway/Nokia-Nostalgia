@@ -1,15 +1,17 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..models import AuthResponse, LoginRequest, SignupRequest, ApiResponse, User
-from ..database import get_user_by_email, get_user_by_username, create_user
+from ..database import get_user_by_email, get_user_by_username, create_user, get_user_with_password
 from ..db import get_db
+from ..security import get_password_hash, verify_password
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @router.post("/login", response_model=AuthResponse)
 async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)):
-    user = await get_user_by_email(db, request.email)
-    if user and request.password == "password123": # Simple mock password check
+    user_db = await get_user_with_password(db, request.email)
+    if user_db and verify_password(request.password, user_db.hashed_password):
+        user = User(id=user_db.id, username=user_db.username, email=user_db.email)
         token = f"mock-token-{user.id}-{user.username}"
         return AuthResponse(success=True, user=user, token=token)
     return AuthResponse(success=False, error="Invalid email or password") # Return 200 with error as per frontend expectation, or 401 if strict REST. Frontend expects 200 with success: false
@@ -24,7 +26,8 @@ async def signup(request: SignupRequest, db: AsyncSession = Depends(get_db)):
     if len(request.password) < 6:
         return AuthResponse(success=False, error="Password must be at least 6 characters")
 
-    user = await create_user(db, request.username, request.email)
+    hashed_password = get_password_hash(request.password)
+    user = await create_user(db, request.username, request.email, hashed_password)
     token = f"mock-token-{user.id}-{user.username}"
     return AuthResponse(success=True, user=user, token=token)
 

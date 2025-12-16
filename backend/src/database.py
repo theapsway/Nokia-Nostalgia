@@ -21,11 +21,16 @@ async def get_user_by_username(session: AsyncSession, username: str) -> Optional
         return PydanticUser(id=user.id, username=user.username, email=user.email)
     return None
 
-async def create_user(session: AsyncSession, username: str, email: str) -> PydanticUser:
+async def get_user_with_password(session: AsyncSession, email: str) -> Optional[User]:
+    result = await session.execute(select(User).where(User.email == email))
+    return result.scalar_one_or_none()
+
+async def create_user(session: AsyncSession, username: str, email: str, hashed_password: str) -> PydanticUser:
     new_user = User(
         id=str(uuid.uuid4()),
         username=username,
-        email=email
+        email=email,
+        hashed_password=hashed_password
     )
     session.add(new_user)
     await session.commit()

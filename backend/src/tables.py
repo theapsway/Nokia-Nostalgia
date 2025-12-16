@@ -11,6 +11,7 @@ class User(Base):
     id = Column(String, primary_key=True)
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
 
 class LeaderboardEntry(Base):
     __tablename__ = "leaderboard"
